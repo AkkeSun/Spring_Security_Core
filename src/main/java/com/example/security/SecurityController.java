@@ -1,13 +1,17 @@
 package com.example.security;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
+
 @RestController
+@RequestMapping("/test1")
 public class SecurityController {
 
-    @GetMapping("/")
-    public String home(){
+    @GetMapping
+    public String home(HttpSession session){
         return "home";
     }
 

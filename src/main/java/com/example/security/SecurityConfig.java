@@ -3,6 +3,7 @@ package com.example.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -33,6 +34,7 @@ import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity // 웹 보안 활성화
+@Order(0) // 보안 폭이 좁은 것을 우선순위로 둔다
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -45,19 +47,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
          *               인가 정책
          **************************************/
         http
-            .authorizeRequests()           // 요청에 대한 인가심사 시작 (위에서부터 아래로. 아래로 갈수록 권한이 넓어지도록 설정)
-                .antMatchers("/login").permitAll()
-                .antMatchers("/user").hasRole("USER")
-                .antMatchers("/admin/pay").hasRole("ADMIN")
-                .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
+            .antMatcher("/test1/**/")       // 해당 경로로 들어오는 요청만 인가심사
+            .authorizeRequests()            // 요청에 대한 인가심사 시작 (위에서부터 아래로. 아래로 갈수록 권한이 넓어지도록 설정)
+                .antMatchers("/test1/login").permitAll()
+                .antMatchers("/test1/user").hasRole("USER")
+                .antMatchers("/test1/admin/pay").hasRole("ADMIN")
+                .antMatchers("/test1/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
                 .anyRequest().authenticated()
 
         //  .antMatchers("/test/ip").hasIpAddress("127.0.0.1")
         //  .mvcMatchers(HttpMethod.GET, "shop/mvc").permitAll();
         ;
-
-
-
 
 
 
@@ -68,12 +68,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         //------- form 로그인 사용 --------
         http
                 .formLogin()
-            //  .loginPage("/loginPage")           // 커스텀 로그인 페이지 url
-                .defaultSuccessUrl("/")            // 로그인 성공시 이동할 url
-                .failureForwardUrl("/login")       // 로그인 실패시 이동할 url
-                .usernameParameter("username")       // 로그인 아이디 파라미터명
-                .passwordParameter("password")     // 로그인 패스워드 파라미터명
-                .loginProcessingUrl("/login_proc") // 로그인 프로세싱 url (default = /login)
+            //  .loginPage("/loginPage")            // 커스텀 로그인 페이지 url
+                .defaultSuccessUrl("/test1")        // 로그인 성공시 이동할 url
+                .failureForwardUrl("/login")  // 로그인 실패시 이동할 url
+                .usernameParameter("username")      // 로그인 아이디 파라미터명
+                .passwordParameter("password")      // 로그인 패스워드 파라미터명
+                .loginProcessingUrl("/login_proc")  // 로그인 프로세싱 url (default = /login)
                 // 로그인 성공시 실행되는 핸들러
                 .successHandler(new AuthenticationSuccessHandler() {
                     @Override
@@ -153,7 +153,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(new AccessDeniedHandler() {
                     @Override
                     public void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AccessDeniedException e) throws IOException, ServletException {
-                        httpServletResponse.sendRedirect("/denied");
+                        httpServletResponse.sendRedirect("/test1/denied");
                     }
                 })
         ;
@@ -179,5 +179,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // get을 제외한 요청 시 csrf filter가 생성한 토큰을 실어보내지 않으면 요청이 실패된다
         http
                 .csrf().disable();
+    }
+}
+
+
+/********************************
+ * 다중 보안설정 (넓은 권한일수록 Order 높게주기)
+ ********************************/
+@Configuration
+@Order(1)
+class SecurityConfig2 extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http
+                .authorizeRequests()
+                .anyRequest().permitAll()
+                .and()
+                .formLogin()
+        ;
     }
 }
