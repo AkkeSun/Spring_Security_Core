@@ -39,6 +39,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     UserDetailsService userDetailsService;
+    
+    
+    /**************************************
+     *           정적파일 무조건 허용
+     **************************************/
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().mvcMatchers("/favicon.ico");
+        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations()); //기본 설정된 모든 정적파일들
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
